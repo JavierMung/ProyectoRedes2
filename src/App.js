@@ -7,19 +7,19 @@ function App() {
   const [files, setFiles] = useState([])
   const file_target = useRef(null)
   const [isOn, setIsOn] = useState(false);
-
+  const [load, setLoad] = useState(false);
   const toggleSwitch = () => {
     setIsOn(!isOn)
     //background-image:url("../public/wave.svg"); 
-    document.body.setAttribute("data-ison",isOn)
-    
+    document.body.setAttribute("data-ison", isOn)
+
   }
   const spring = {
     type: "spring",
     stiffness: 700,
     damping: 30
   };
- 
+
   useEffect(() => {
     fetch('http://localhost:8080/getdata')
       .then(res => res.json())
@@ -28,6 +28,7 @@ function App() {
 
   }, []);
   const saveFile = () => {
+    setLoad(true)
     if (file_target.current.value) {
       fetch('http://localhost:8080/uploadfile', {//?nombre=Archivo56&fecha=10/10/10
         method: "POST",
@@ -35,13 +36,21 @@ function App() {
         headers: { "content-type": "application/json; chsrset=UTF-8" }
       })
         .then(res => res.json())
-        .then(res => setFiles(res))
-        .catch((err) => console.error(err))
+        .then(res => {
+          setFiles(res)
+          setLoad(false)
+        })
+        .catch((err) => {
+          setLoad(false)
+          console.error(err)
+        })
     }
   }
 
   const downloadButton = (event, name) => {
-    console.log(name)
+    fetch(`http://localhost:8080/downloadFile?name=${name}`)
+    .then(res => console.log(res))
+    .catch(err=>console.log(err))
   }
 
   return (
@@ -60,11 +69,23 @@ function App() {
             <div className="input-group mb-3">
               <input ref={file_target} type="file" className="form-control" id="inputGroupFile01" />
               <button type="button" className="btn btn-primary" onClick={saveFile}>Save</button>
+
             </div>
           </div>
         </section>
-        <section  className="tabla ">
-          <table  className="table text-light">
+        <div style={{ display: "grid", justifyContent: "center" }}>
+
+          {load ?
+            <div class="d-flex align-items-center">
+              <button class="btn btn-primary" type="button" disabled>
+                <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+                Saving file...
+              </button>
+            </div> : <></>
+          }
+        </div>
+        <section className="tabla ">
+          <table className="table text-light">
             <thead className="tabla2" data-ison={isOn}>
               <tr>
                 <th scope="col">Name</th>
